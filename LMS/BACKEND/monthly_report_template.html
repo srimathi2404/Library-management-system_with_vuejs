@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Monthly Activity Report</title>
+  <style>
+    /* Your CSS styles */
+    table {
+      border-collapse: collapse;
+      width: 50%;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    img {
+      width: 50%; /* Adjust image size as needed */
+      display: block;
+      margin: auto;
+    }
+    .chart-container {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Monthly Activity Report</h1>
+
+  <!-- Table of books accessed -->
+  <h2>Books Accessed</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Book Name</th>
+        <th>Author</th>
+        <th>Date Accessed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Loop through data and display it -->
+      {% for book in books %}
+      <tr>
+        <td>{{ book.name }}</td>
+        <td>{{ book.author }}</td>
+        <td>{{ book.access_date }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Chart image -->
+  <h2>Chart: Books Accessed</h2>
+  <div class="chart-container">
+    <img src="{{ image_path }}" alt="Books Accessed Chart">
+  </div>
+
+</body>
+</html>

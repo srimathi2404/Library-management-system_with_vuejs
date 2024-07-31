@@ -1,0 +1,27 @@
+commands
+npm run serve
+python app.py
+
+celery commands
+celery -A  worker backjobs-l info -P eventlet
+celery -A backjobs beat -l info
+celery -A app.celery_app beat -l info
+
+
+
+
+git commands
+git add .
+git commit -m ""
+git pust -u origin master
+
+git pull commands
+git checkout <branch name>
+git fetch origin
+git pull origin master
+git merge master
+
+
+git stash
+git pull origin master
+git stash apply
