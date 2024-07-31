@@ -4,7 +4,9 @@
       <div class="navbar-logo">
         <img src="/logo.JPG" alt="Logo" class="logo-image">
       </div>
-      <div class="navbar-title">LIBRARIAN DASHBOARD</div>
+      <div class="navbar-title-container">
+        <div class="navbar-title">LIBRARIAN DASHBOARD</div>
+      </div>
       <div class="navbar-links">
         <router-link to="/lib-dashboard/User-Management" class="navbar-link">User Management</router-link>
         <router-link to="/lib-dashboard" class="navbar-link">Lib home</router-link>
@@ -74,11 +76,19 @@ export default {
   width: auto;
 }
 
-.navbar-title {
+.navbar-title-container {
   flex-grow: 1;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  width: 100%;
+  pointer-events: none; /* Allow clicks to pass through */
+}
+
+.navbar-title {
   font-size: 1.5rem;
   font-weight: bold;
+  pointer-events: auto; /* Re-enable pointer events for the title */
 }
 
 .navbar-links {

@@ -1,20 +1,18 @@
 <template>
   <div class="page-container">
-    <form class="d-flex mx-auto search-form" @submit.prevent="searchProducts">
+    <form class="d-flex mx-auto search-form">
       <input v-model="searchQuery" class="form-control me-3 shadow-lg border-white text-white bg-black" type="search" placeholder="Search" aria-label="Search">
-      <button class="btn btn-outline-light bg-black text-white" type="submit">
-        <i class="bi bi-search"></i> Search
-      </button>
+      <button class="btn btn-outline-light bg-black text-white" type="button" @click="clearSearch">Clear</button>
     </form>
 
     <div class="container mt-4">
       <div class="section-container">
-        <div v-for="section in section_item" :key="section.id" class="section-card mb-4">
+        <div v-for="section in filteredSections" :key="section.id" class="section-card mb-4">
           <div class="section-header">
             <h3 class="section-title">{{ section.name }}</h3>
           </div>
           <div class="card-container">
-            <div v-for="book in filteredBooks(section.id)" :key="book.id" class="book-card">
+            <div v-for="book in filteredBooks(section)" :key="book.id" class="book-card">
               <div>
                 <strong class="book-title">{{ book.name }}</strong>
                 <div class="book-author"><i>- by {{ book.author }}</i></div>
@@ -62,8 +60,18 @@ export default {
     };
   },
   computed: {
+    filteredSections() {
+      if (!this.searchQuery) return this.section_item;
+      return this.section_item.filter(section => section.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        this.filteredBooks(section).length > 0);
+    },
     filteredBooks() {
-      return (sectionId) => this.book_item.filter(book => book.section_id === sectionId);
+      return (section) => {
+        if (section.name.toLowerCase().includes(this.searchQuery.toLowerCase())) {
+          return this.book_item.filter(book => book.section_id === section.id);
+        }
+        return this.book_item.filter(book => book.section_id === section.id && (book.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || book.author.toLowerCase().includes(this.searchQuery.toLowerCase())));
+      };
     }
   },
   mounted() {
@@ -72,26 +80,8 @@ export default {
     this.get_book_access();
   },
   methods: {
-    async searchProducts() {
-      try {
-        const response = await fetch(`http://localhost:5000/api/search/${this.searchQuery}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authentication-Token': JSON.parse(sessionStorage.getItem('token'))
-          },
-        });
-        const data = await response.json();
-        if (response.ok) {
-          this.section_item = data.sections;
-          this.book_item = data.books;
-          this.updateBookAccessStatus();
-        } else {
-          console.error('Failed to fetch products');
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
+    clearSearch() {
+      this.searchQuery = '';
     },
     async get_all_section() {
       try {
@@ -236,16 +226,27 @@ export default {
 
 .search-form {
   margin: 20px 0;
+  max-width: 600px; /* Keep the search bar short */
 }
 
 .form-control {
-  background-color: #000; /* Black background for input */
+  background-color: #222; /* Darker background for input */
   color: #fff; /* White text */
+}
+
+.form-control:focus {
+  background-color: #222; /* Maintain dark background on focus */
+  color: #fff; /* Maintain white text on focus */
 }
 
 .btn-outline-light {
   border-color: #fff; /* White border */
   color: #fff; /* White text */
+}
+
+.btn-outline-light:hover {
+  background-color: #444; /* Darker background on hover */
+  color: #fff; /* White text on hover */
 }
 
 .section-container {
