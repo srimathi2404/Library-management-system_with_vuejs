@@ -137,3 +137,143 @@ def get_monthly_accessed_books(user_id, year, month):
     ).all()
     print(result)
     return result
+
+
+from datetime import datetime
+def get_returned_books_today():
+    # Get today's date in the same format as stored in the database
+    today = datetime.now().strftime("%B %d, %Y")
+    
+    # Query all book accesses that are approved
+    book_accesses = BookAccess.query.filter_by(is_approved=1).all()
+    
+    reminders = {}
+
+    for access in book_accesses:
+        return_date = access.return_date  # This should be in the format "%B %d, %Y"
+        if return_date == today:
+            user_id = access.user_id
+            book_id = access.book_id
+            
+            # Fetch the book details
+            book = Books.query.filter_by(id=book_id).first()
+            if book:
+                book_name = book.name
+                if user_id not in reminders:
+                    reminders[user_id] = []
+                reminders[user_id].append(book_name)
+    
+    return reminders
+
+def get_other_books():
+    # Get today's date in the same format as stored in the database
+    today = datetime.now().strftime("%B %d, %Y")
+    
+    # Query all book accesses that are approved
+    book_accesses = BookAccess.query.filter_by(is_approved=1).all()
+    
+    other_books = {}
+
+    for access in book_accesses:
+        return_date = access.return_date  # This should be in the format "%B %d, %Y"
+        if return_date and return_date != today:  # Omit null values and today's date
+            user_id = access.user_id
+            book_id = access.book_id
+            
+            # Fetch the book details
+            book = Books.query.filter_by(id=book_id).first()
+            if book:
+                book_name = book.name
+                if user_id not in other_books:
+                    other_books[user_id] = []
+                other_books[user_id].append((book_name, return_date))
+    
+    return other_books
+
+
+
+from datetime import datetime, timedelta
+
+def get_monthly_report_data():
+    first_day_of_month = datetime.now().replace(day=1)
+    first_day_of_next_month = (first_day_of_month + timedelta(days=31)).replace(day=1)
+
+    history_records = History.query.filter(
+        History.return_date >= first_day_of_month.strftime("%B %d, %Y"),
+        History.return_date < first_day_of_next_month.strftime("%B %d, %Y")
+    ).all()
+    
+    report_data = {}
+
+    for record in history_records:
+        user_id = record.user_id
+        book_id = record.book_id
+        
+        user = User.query.filter_by(id=user_id).first()
+        book = Books.query.filter_by(id=book_id).first()
+        
+        if user and book:
+            if user_id not in report_data:
+                report_data[user_id] = {
+                    'username': user.id,  # Use the 'id' field for the username
+                    'email': user.email,
+                    'books': []
+                }
+            report_data[user_id]['books'].append({
+                'book_name': book.name,
+                'author': book.author,
+                'issue_date': record.issue_date,
+                'return_date': record.return_date
+            })
+    
+    return report_data
+
+def remove_expired_book_access():
+    today = datetime.now().strftime("%B %d, %Y")
+    
+    # Query all book accesses with return date today or before
+    expired_book_accesses = BookAccess.query.filter(BookAccess.return_date <= today).all()
+    
+    expired_dict = []
+    for access in expired_book_accesses:
+        expired_dict.append({
+            'user_id': access.user_id,
+            'book_id': access.book_id
+        })
+    
+    return expired_dict
+
+import os
+import csv
+def export_ebook_access_to_csv():
+    today = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"ebook_access_{today}.csv"
+    export_dir = "C:\\Users\\18049\\Desktop\\exports"  # Ensure this directory exists
+    filepath = os.path.join(export_dir, filename)
+
+    # Ensure the export directory exists
+    if not os.path.exists(export_dir):
+        os.makedirs(export_dir)
+
+    book_accesses = BookAccess.query.all()
+    
+    with open(filepath, 'w', newline='') as csvfile:
+        fieldnames = ['User ID', 'Book ID', 'Name', 'Content', 'Author(s)', 'Date Issued', 'Return Date','is_approved']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        for access in book_accesses:
+            book = Books.query.filter_by(id=access.book_id).first()
+            user = User.query.filter_by(id=access.user_id).first()
+            writer.writerow({
+                'User ID': access.user_id,
+                'Book ID': access.book_id,
+                'Name': book.name,
+                'Content': book.content,
+                'Author(s)': book.author,
+                'Date Issued': access.issue_date,
+                'Return Date': access.return_date,
+                'is_approved': access.is_approved
+            })
+
+    return filepath

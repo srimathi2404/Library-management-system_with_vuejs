@@ -1,6 +1,7 @@
 from flask_restful import Resource, Api, marshal, reqparse, fields, marshal_with
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
+from utils import send_notification
 from Cache import cache
 # from model_func import AddProduct, DeleteCategory, DeleteProduct, EditCategory, ProductUpdate, addcart, cartProducts, \
 #     deleteProductCart, product, profileItems, updateQuantity, validateCategory_id, \
@@ -8,7 +9,7 @@ from Cache import cache
 #     validateProduct_name, fetch_category, fetch_category_unapproved, EditCategory_ia, EditCategory_name, \
 #     fetch_cat_by_id, get_all_prod_by_cat_id, validateCategoryApproved, fetch_pending_user, validateManager, deleteUser
 from flask import abort, jsonify, request,make_response
-from model_func import all_section,add_section,get_section_by_id,edit_section,del_section,Add_book,edit_book,del_book,edit_book_access,edit_is_approve,Del_access
+from model_func import all_section,add_section,get_section_by_id,edit_section,del_section,Add_book,edit_book,del_book,edit_book_access,edit_is_approve,Del_access,export_ebook_access_to_csv
 from models import db, Books,History
 # from task import send_welcome_msg, generate_csv
 import datetime
@@ -65,14 +66,14 @@ SECTION_ALL = {
 
 
 class add_sec(Resource):
-    # @cache.cached(timeout=15)
+    @cache.cached(timeout=15)
     @auth_required('token')
     def get(self):
         sec=all_section()
         return jsonify(marshal(sec,SECTION_ALL))
     @auth_required('token')
     @roles_accepted('librarian')
-    # @cache.cached(timeout=15)
+ 
     def post(self):
         data=sec.parse_args()
         name=data['name']
@@ -149,7 +150,7 @@ BOOK_ALL = {
 
 class add_book(Resource):
     @auth_required('token')
-
+    @cache.cached(timeout=15)
     def get(self):
         books = Books.query.all()
         book_list = []
@@ -553,3 +554,15 @@ class AvgRatings(Resource):
         ratings_list = [{'user_id': rating.user_id, 'rating': rating.rating} for rating in ratings]
         return {'ratings': ratings_list}
 api.add_resource(AvgRatings,'/ratings/<int:book_id>')
+
+
+
+class TriggerExport(Resource):
+    def post(self):
+        filepath = export_ebook_access_to_csv()
+        send_notification(f"E-book access details have been exported successfully. You can download the file from {filepath}")
+        return jsonify({"message": "Export task has been completed.", "file": filepath})
+
+api.add_resource(TriggerExport, '/trigger_export')
+
+

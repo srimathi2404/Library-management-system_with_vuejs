@@ -74,7 +74,7 @@ with app.app_context():
         password="lib"
         fname="LIBRAIAN"
         lname="LIBRARIAN"
-        email="lib@gmail.com"
+        email="bookhive14@gmail.com"
         mobile=1234567890
         role=["librarian"]
         is_auth=True
@@ -88,7 +88,7 @@ with app.app_context():
         password="sri"
         fname="sri"
         lname="sri"
-        email="sri@gmail.com"
+        email="srima.r2004@gmail.com"
         mobile=1234567899
         role=["user"]
         is_auth=True

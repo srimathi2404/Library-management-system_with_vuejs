@@ -3,7 +3,7 @@ npm run serve
 python app.py
 
 celery commands
-celery -A  worker backjobs-l info -P eventlet
+celery -A backjobs worker -l info -P eventlet
 celery -A backjobs beat -l info
 celery -A app.celery_app beat -l info
 
