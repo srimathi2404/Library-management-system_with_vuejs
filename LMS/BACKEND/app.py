@@ -102,62 +102,39 @@ with app.app_context():
         # celery_app = celery_init_app(app)
 
 
-@app.route('/download_csv')
-def download_csv():
-    return send_file(f'./instance/name.csv', as_attachment=True)
 
 
-@app.get("/cached-data")
-@cache.cached(timeout=50)
-def cached_data():
-    time.sleep(10)
-    print("printing cached data")
-    return {"cached_data": "sds"}
-
-@app.route('/gen_csv')
-def gen_csv():
-    from tasks import bla
-    task=bla.delay()
-    return jsonify({"task-id": task.id})
-
-@app.route('/task')
-def taskgy():
-
-    task=monthly_report.delay()
-    return jsonify({"task-id": task.id})
-
-@app.get('/get_csv/<task_id>')
-def get_csv(task_id):
-    res = AsyncResult(task_id)
-    print(res)
-    if res.ready():
-        filename = res.result
-        return send_file(filename, as_attachment=True)
-    else:
-        return jsonify({"message": "Task Pending"}), 404
- 
-
-from celery.schedules import crontab
-@celery_app.on_after_configure.connect
-def send_email(sender, **kwargs):
-    sender.add_periodic_task(
-        crontab(hour=19, minute=55, day_of_month=20),
-        engagment.s(),
-    )
-
-@app.post('/add-to-desktop')
+@app.route('/add-to-desktop', methods=['POST'])
 def add_to_desktop():
-    data=request.get_json()
-    app_name = data['name']
-    icon_path = data['icon']
-    app_route = data['url']
+    try:
+        data = request.get_json()
+        app_name = data['name']
+        icon_path = data['icon']
+        app_route = data['url']  # This should be the URL of your web application
+        
+        # Ensure the icon path is absolute
+        if not os.path.isabs(icon_path):
+            icon_path = os.path.abspath(icon_path)
+        
+        shortcut_path = f'C:\\Users\\18049\\Desktop\\{app_name}.lnk'
+        
+        # Log details
+        print(f"Creating shortcut with the following details:")
+        print(f"App Name: {app_name}")
+        print(f"Icon Path: {icon_path}")
+        print(f"App Route: {app_route}")
+        print(f"Shortcut Path: {shortcut_path}")
+        
+        # Check if the icon path exists
+        if not os.path.exists(icon_path):
+            return jsonify({"Error": f"Icon path does not exist: {icon_path}"}), 400
+        
+        # Create the shortcut for the URL
+        make_shortcut(app_route, name=app_name, icon=icon_path, terminal=False, folder='C:\\Users\\18049\\Desktop\\')
 
-    shortcut_path= f'/Users/shriprasad/Desktop/{app_name}'
-    # Creating the desktop shortcut
-    make_shortcut(app_name,shortcut_path,icon=icon_path, terminal=False)
-
-    return {"Message":"Shortcut Created Successfully!"}
-
+        return jsonify({"Message": "Shortcut Created Successfully!"})
+    except Exception as e:
+        return jsonify({"Error": str(e)}), 500
 from login import *
 
 

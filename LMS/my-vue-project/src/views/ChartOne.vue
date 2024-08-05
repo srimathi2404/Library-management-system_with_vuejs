@@ -9,7 +9,7 @@
       <p v-else>No data available for user activity</p>
     </div>
     <div class="chart-container">
-      <apexchart v-if="popularBooksSeries[0].data.length" type="donut" :options="popularBooksOptions" :series="popularBooksSeries"></apexchart>
+      <apexchart v-if="popularBooksSeries.length" type="donut" :options="popularBooksOptions" :series="popularBooksSeries"></apexchart>
       <p v-else>No popular books</p>
     </div>
     <div class="chart-container">
@@ -30,7 +30,7 @@ export default {
   setup() {
     const bookSecSeries = ref([{ name: 'Books', data: [] }]);
     const topUserSeries = ref([{ name: 'Activity Count', data: [] }]);
-    const popularBooksSeries = ref([{ name: 'Ratings', data: [] }]);
+    const popularBooksSeries = ref([]); // Changed to an empty array to handle no data case
     const issuesReturnsSeries = ref([{ name: 'Issues', data: [] }, { name: 'Returns', data: [] }]);
 
     const bookSecOptions = reactive({
@@ -101,13 +101,12 @@ export default {
         // Fetch Most Popular Books
         const popularBooksRes = await fetch('http://localhost:5000/api/popular_books');
         const popularBooksData = await popularBooksRes.json();
-        if (popularBooksData.message) {
-          popularBooksOptions.title.text = popularBooksData.message;
+        if (popularBooksData.message || !popularBooksData.length) {
           popularBooksOptions.labels = ["No Data"];
-          popularBooksSeries.value[0].data = [1];
+          popularBooksSeries.value = [1]; // Ensure the series is not empty
         } else {
           popularBooksOptions.labels = popularBooksData.map(book => book.book_name);
-          popularBooksSeries.value[0].data = popularBooksData.map(book => book.avg_rating);
+          popularBooksSeries.value = popularBooksData.map(book => book.avg_rating);
         }
 
         // Fetch Book Issues and Returns Over Time

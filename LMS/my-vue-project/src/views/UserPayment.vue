@@ -17,7 +17,7 @@
           </div>
           <button type="submit" class="btn btn-outline-light bg-black text-white">Submit Payment</button>
         </form>
-        <div v-if="message" class="alert alert-info mt-3">{{ message }}</div>
+        <div v-if="message" :class="{'alert': true, 'alert-info': !error, 'alert-danger': error}">{{ message }}</div>
       </div>
     </div>
   </template>
@@ -28,20 +28,26 @@
       return {
         books: [],
         paidBooks: [],
+        bookAccess: [],
         selectedBook: null,
         upiId: '',
-        message: ''
+        message: '',
+        error: false
       };
     },
     mounted() {
       this.getBooks();
       this.getPaidBooks();
-      this.getUPIId();
+      this.getBookAccess();
     },
     computed: {
       unpaidBooks() {
         const paidBookIds = this.paidBooks.map(book => book.book_id);
-        return this.books.filter(book => !paidBookIds.includes(book.id));
+        const excludedBookIds = this.bookAccess
+          .filter(ba => (ba.is_approved === 0 || ba.is_approved === 1) && ba.user_id === sessionStorage.getItem('user_id'))
+          .map(ba => ba.book_id);
+  
+        return this.books.filter(book => !paidBookIds.includes(book.id) && !excludedBookIds.includes(book.id));
       }
     },
     methods: {
@@ -80,27 +86,37 @@
           console.error("Error:", error);
         }
       },
-      async getUPIId() {
+      async getBookAccess() {
         const user_id = sessionStorage.getItem('user_id');
         try {
-          const response = await fetch(`http://localhost:5000/api/payment/${user_id}`, {
+          const response = await fetch(`http://localhost:5000/api/bookaccess/${user_id}`, {
             headers: {
               'Authentication-Token': JSON.parse(sessionStorage.getItem('token'))
             }
           });
           const data = await response.json();
           if (response.status === 200) {
-            this.upiId = data.upi_id || '';
+            this.bookAccess = data;
           } else {
-            console.error("Failed to fetch UPI ID");
+            console.error("Failed to fetch book access data");
           }
         } catch (error) {
           console.error("Error:", error);
         }
       },
+      validateUPIId() {
+        return this.upiId.includes('@');
+      },
       async submitPayment() {
         if (!this.selectedBook || !this.upiId) {
           this.message = 'Please fill in all the fields.';
+          this.error = true;
+          return;
+        }
+  
+        if (!this.validateUPIId()) {
+          this.message = 'Please enter a valid UPI ID.';
+          this.error = true;
           return;
         }
   
@@ -123,6 +139,10 @@
           });
           const data = await response.json();
           this.message = data.message;
+          this.error = !response.ok;
+          if (response.ok) {
+            this.getPaidBooks(); // Refresh paid books data
+          }
         } catch (error) {
           console.error("Error:", error);
         }
@@ -185,6 +205,13 @@
     color: #000;
     background-color: #d1ecf1;
     border-color: #bee5eb;
+    margin-top: 20px;
+  }
+  
+  .alert-danger {
+    color: #fff;
+    background-color: #ff4444;
+    border-color: #ff4444;
     margin-top: 20px;
   }
   </style>

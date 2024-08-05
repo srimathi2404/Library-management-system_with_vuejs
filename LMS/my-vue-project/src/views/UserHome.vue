@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    <h3 class="welcome-message">Welcome, {{ USERNAME }} !!</h3>
     <form class="d-flex mx-auto search-form">
       <input v-model="searchQuery" class="form-control me-3 shadow-lg border-white text-white bg-black" type="search" placeholder="Search" aria-label="Search">
       <button class="btn btn-outline-light bg-black text-white" type="button" @click="clearSearch">Clear</button>
@@ -20,7 +21,10 @@
                   <star-rating :rating="book.avg_rating" :read-only="true"></star-rating>
                 </div>
                 <div class="mt-3">
-                  <template v-if="book.accessStatus === 'currentlyAccessed'">
+                  <template v-if="book.accessStatus === 'bought'">
+                    <span>Book Bought</span>
+                  </template>
+                  <template v-else-if="book.accessStatus === 'currentlyAccessed'">
                     <span>Already Reading</span>
                   </template>
                   <template v-else-if="book.accessStatus === 'requested'">
@@ -28,9 +32,6 @@
                   </template>
                   <template v-else-if="book.accessStatus === 'rejected'">
                     <button type="button" @click="requestBook(book.id)" class="btn btn-outline-light">Request Again</button>
-                  </template>
-                  <template v-else-if="book.accessStatus === 'bought'">
-                    <span>Book Bought</span>
                   </template>
                   <template v-else>
                     <button type="button" @click="requestBook(book.id)" class="btn btn-outline-light">Request Book</button>
@@ -59,7 +60,8 @@ export default {
       section_item: [],
       book_item: [],
       book_access: [],
-      searchQuery: ''
+      searchQuery: '',
+      USERNAME:''
     };
   },
   computed: {
@@ -81,6 +83,7 @@ export default {
     this.get_all_section();
     this.get_all_books();
     this.get_book_access();
+    this.USERNAME=sessionStorage.getItem('user_id')
   },
   methods: {
     clearSearch() {
@@ -158,14 +161,14 @@ export default {
       this.book_item.forEach(book => {
         const access = this.book_access.find(ba => ba.book_id === book.id && ba.user_id === sessionStorage.getItem('user_id'));
         if (access) {
-          if (access.is_approved === 1) {
+          if (access.is_approved === 2) {
+            book.accessStatus = 'bought';
+          } else if (access.is_approved === 1) {
             book.accessStatus = 'currentlyAccessed';
           } else if (access.is_approved === 0) {
             book.accessStatus = 'requested';
           } else if (access.is_approved === -1) {
             book.accessStatus = 'rejected';
-          } else if (access.is_approved === 2) {
-            book.accessStatus = 'bought';
           }
         } else {
           book.accessStatus = null;
@@ -251,6 +254,7 @@ export default {
 
 <style scoped>
 .page-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -258,6 +262,13 @@ export default {
   min-height: 100vh;
   background-color: #000; /* Black background */
   color: #fff; /* White text */
+}
+
+.welcome-message {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  margin: 0;
 }
 
 .search-form {

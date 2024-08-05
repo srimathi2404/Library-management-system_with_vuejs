@@ -9,6 +9,7 @@
         <router-link to="/user-dashboard/profile" class="navbar-link">User Profile</router-link>
         <router-link to="/user-dashboard/" class="navbar-link">User Home</router-link>
         <router-link to="/user-dashboard/payment" class="navbar-link">Pay</router-link>
+        <!-- <button @click="createDesktopShortcut" class="navbar-link">Create Shortcut</button> -->
         <button @click="handleLogout" class="navbar-link">Logout</button>
       </div>
     </nav>
@@ -26,22 +27,41 @@ export default {
   },
   created() {
     this.checkAuthorization();
-    console.log(this.userRole);
-    console.log(this.authToken);
   },
   methods: {
     checkAuthorization() {
-      this.authToken = sessionStorage.getItem('token'); // or this.$store.state.authToken
-      this.userRole = sessionStorage.getItem('role'); // or this.$store.state.userRole
+      this.authToken = sessionStorage.getItem('token');
+      this.userRole = sessionStorage.getItem('role');
 
       if (!this.authToken || !this.userRole) {
         alert("unauthorized");
         this.$router.push({ name: 'login' });
-      } 
+      }
     },
     handleLogout() {
-      sessionStorage.clear(); // Clear all session storage
-      this.$router.push({ name: 'HelloWorld' }); // Redirect to login page
+      sessionStorage.clear();
+      this.$router.push({ name: 'HelloWorld' });
+    },
+    async createDesktopShortcut() {
+      try {
+        const response = await fetch('http://localhost:5000/add-to-desktop', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authentication-Token': JSON.parse(sessionStorage.getItem('token'))
+          },
+          body: JSON.stringify({
+            name: 'MyApp',
+            icon: 'C:\\Users\\18049\\Desktop\\icon.ico',  // Adjust this path to your .ico file
+            url: 'http://localhost:8080/'    // The URL of your web application
+          })
+        });
+
+        const data = await response.json();
+        alert(data.Message || data.Error);
+      } catch (error) {
+        console.error("Error creating shortcut:", error);
+      }
     }
   }
 };
@@ -52,8 +72,8 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #000; /* Black background */
-  color: #fff; /* White text */
+  background-color: #000;
+  color: #fff;
 }
 
 .navbar {
@@ -61,7 +81,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 10px;
-  background-color: #333; /* Grey background */
+  background-color: #333;
   box-sizing: border-box;
 }
 
@@ -71,7 +91,7 @@ export default {
 }
 
 .logo-image {
-  height: 40px; /* Adjust the size as needed */
+  height: 40px;
   width: auto;
 }
 
@@ -86,13 +106,13 @@ export default {
 .navbar-links {
   display: flex;
   gap: 10px;
-  margin-left: auto; /* Push links to the right */
+  margin-left: auto;
 }
 
 .navbar-link {
   background: none;
   border: none;
-  color: #fff; /* White text */
+  color: #fff;
   font-weight: bold;
   cursor: pointer;
   text-decoration: none;
@@ -101,8 +121,8 @@ export default {
 }
 
 .navbar-link:hover {
-  color: #000; /* Black text on hover */
-  background-color: #fff; /* White background on hover */
+  color: #000;
+  background-color: #fff;
 }
 
 .router-link-active {

@@ -106,11 +106,16 @@ def edit_is_approve(book_id, user_id, is_approved,issue_date,return_date):
     else:
         return False
 
+from datetime import datetime
+
 def Del_access(book_id, user_id):
     book_access = BookAccess.query.filter_by(book_id=book_id, user_id=user_id).first()
-    books=Books.query.filter_by(id=book_id).first()
+    books = Books.query.filter_by(id=book_id).first()
     if book_access:
-        db.session.add(History(book_id=book_id, user_id=user_id, issue_date=book_access.issue_date, return_date=book_access.return_date,name=books.name,author=books.author))
+        now = datetime.now()
+        date = now.strftime("%B %d, %Y")
+        
+        db.session.add(History(book_id=book_id, user_id=user_id, issue_date=book_access.issue_date, return_date=date, name=books.name, author=books.author))
         db.session.delete(book_access)
         db.session.commit()
         return True

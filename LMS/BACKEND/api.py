@@ -66,7 +66,7 @@ SECTION_ALL = {
 
 
 class add_sec(Resource):
-    @cache.cached(timeout=15)
+    @cache.cached(timeout=5)
     @auth_required('token')
     def get(self):
         sec=all_section()
@@ -150,7 +150,7 @@ BOOK_ALL = {
 
 class add_book(Resource):
     @auth_required('token')
-    @cache.cached(timeout=15)
+    @cache.cached(timeout=5)
     def get(self):
         books = Books.query.all()
         book_list = []
