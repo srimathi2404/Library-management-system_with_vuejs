@@ -15,6 +15,8 @@ import UserProfile from '../views/UserProfile.vue'
 import AddSecondarySection from '../views/AddSecondarySection.vue'
 import DelSecondarySection from '../views/DelSecondarySection.vue'
 import BookContent from '../views/BookContent.vue'
+import ChartOne from '../views/ChartOne.vue'
+import UserPayment from '../views/UserPayment.vue'
 const routes = [
   {
     path: '/',
@@ -44,6 +46,11 @@ const routes = [
         name: 'BookContent',
         component: BookContent,
         props: true
+      },
+      {
+        path:'payment',
+        name:'payment',
+        component:UserPayment
       }
     
     ]
@@ -59,6 +66,12 @@ const routes = [
         path:'',
         name:'lib-home',
         component:LibHome
+      }
+      ,
+      { 
+        path:'Chart',
+        name:'Chart',
+        component:ChartOne
       }
       ,
 

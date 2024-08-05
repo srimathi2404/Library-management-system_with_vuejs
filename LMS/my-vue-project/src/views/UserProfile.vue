@@ -16,7 +16,7 @@
         </div>
       </div>
 
-      <div v-if="currentlyReading.length" class="profile-section">
+      <div class="profile-section">
         <div class="section-header">
           <h3>Currently Reading</h3>
         </div>
@@ -30,16 +30,18 @@
                 Return by: {{ bookAccess.return_date }}
               </div>
               <button @click="viewContent(bookAccess.bookDetails.id)" class="btn btn-outline-light">View Content</button>
+              <button @click="returnBook(bookAccess.book_id)" class="btn btn-outline-light mt-2">Return Book</button>
               <div class="rating-container">
                 <p>Rate your book</p>
                 <star-rating :rating="bookAccess.userRating" @update:rating="setRating(bookAccess.bookDetails.id, $event)"></star-rating>
               </div>
             </span>
           </div>
+          <div v-if="currentlyReading.length === 0">No books currently being read.</div>
         </div>
       </div>
 
-      <div v-if="currentlyRequested.length" class="profile-section">
+      <div class="profile-section mt-5">
         <div class="section-header">
           <h3>Currently Requested</h3>
         </div>
@@ -53,10 +55,11 @@
               </div>
             </span>
           </div>
+          <div v-if="currentlyRequested.length === 0">No books currently requested.</div>
         </div>
       </div>
 
-      <div v-if="rejectedBooks.length" class="profile-section">
+      <div class="profile-section mt-5">
         <div class="section-header">
           <h3>Books Which Have Been Rejected</h3>
         </div>
@@ -67,10 +70,27 @@
               <div class="book-author"><i>- by {{ bookAccess.bookDetails.author }}</i></div>
             </span>
           </div>
+          <div v-if="rejectedBooks.length === 0">No books have been rejected.</div>
         </div>
       </div>
 
-      <div v-if="pastReadBooks.length" class="profile-section">
+      <div class="profile-section mt-5">
+        <div class="section-header">
+          <h3>Bought Books</h3>
+        </div>
+        <div class="card-container">
+          <div v-for="bookAccess in boughtBooks" :key="bookAccess.book_id" class="book-card">
+            <span v-if="bookAccess.bookDetails">
+              <strong class="book-title">{{ bookAccess.bookDetails.name }}</strong>
+              <div class="book-author"><i>- by {{ bookAccess.bookDetails.author }}</i></div>
+              <button @click="viewContent(bookAccess.bookDetails.id)" class="btn btn-outline-light">View Content</button>
+            </span>
+          </div>
+          <div v-if="boughtBooks.length === 0">No books bought.</div>
+        </div>
+      </div>
+
+      <div class="profile-section mt-5">
         <div class="section-header">
           <h3>Past Read Books</h3>
         </div>
@@ -82,6 +102,7 @@
               Read from: {{ history.issue_date }} to {{ history.return_date }}
             </div>
           </div>
+          <div v-if="pastReadBooks.length === 0">No past read books.</div>
         </div>
       </div>
     </div>
@@ -102,6 +123,7 @@ export default {
       currentlyReading: [],
       currentlyRequested: [],
       rejectedBooks: [],
+      boughtBooks: [],
       pastReadBooks: [],
       books: {},
       lname: '',
@@ -172,6 +194,7 @@ export default {
         this.currentlyReading = filteredBookAccesses.filter(bookAccess => bookAccess.is_approved === 1);
         this.currentlyRequested = filteredBookAccesses.filter(bookAccess => bookAccess.is_approved === 0);
         this.rejectedBooks = filteredBookAccesses.filter(bookAccess => bookAccess.is_approved === -1);
+        this.boughtBooks = filteredBookAccesses.filter(bookAccess => bookAccess.is_approved === 2);
       } catch (error) {
         console.log(error)
         console.error('Error fetching book access data:', error);
@@ -215,6 +238,29 @@ export default {
         alert('Rating submitted successfully');
       } catch (error) {
         console.error('Error submitting rating:', error);
+      }
+    },
+    async returnBook(bookId) {
+      try {
+        const userId = sessionStorage.getItem('user_id');
+        const response = await axios.delete('http://localhost:5000/api/bookaccess', {
+          headers: {
+            'Authentication-Token': JSON.parse(sessionStorage.getItem('token'))
+          },
+          data: {
+            book_id: bookId,
+            user_id: userId
+          }
+        });
+
+        if (response.status === 200) {
+          alert('Book returned successfully.');
+          this.fetchBookAccess(); // Refresh the book access data
+        } else {
+          alert('Failed to return the book.');
+        }
+      } catch (error) {
+        console.error('Error returning book:', error);
       }
     },
     viewContent(bookId) {
@@ -323,6 +369,10 @@ h1, h3 {
 
 .rating-container p {
   margin-right: 10px; /* Space between text and star rating */
+}
+
+.mt-5 {
+  margin-top: 3rem;
 }
 
 ul {

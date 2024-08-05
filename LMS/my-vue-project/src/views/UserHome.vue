@@ -29,6 +29,9 @@
                   <template v-else-if="book.accessStatus === 'rejected'">
                     <button type="button" @click="requestBook(book.id)" class="btn btn-outline-light">Request Again</button>
                   </template>
+                  <template v-else-if="book.accessStatus === 'bought'">
+                    <span>Book Bought</span>
+                  </template>
                   <template v-else>
                     <button type="button" @click="requestBook(book.id)" class="btn btn-outline-light">Request Book</button>
                   </template>
@@ -161,6 +164,8 @@ export default {
             book.accessStatus = 'requested';
           } else if (access.is_approved === -1) {
             book.accessStatus = 'rejected';
+          } else if (access.is_approved === 2) {
+            book.accessStatus = 'bought';
           }
         } else {
           book.accessStatus = null;
@@ -202,6 +207,37 @@ export default {
         this.get_book_access(); // Refresh book access data
       } catch (error) {
         console.error('Error requesting book:', error);
+        alert('There was an error processing your request.');
+      }
+    },
+    async returnBook(bookId) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/bookaccess`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authentication-Token': JSON.parse(sessionStorage.getItem('token'))
+          },
+          body: JSON.stringify({
+            book_id: bookId,
+            user_id: sessionStorage.getItem('user_id')
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to return book');
+        }
+
+        const result = await response.json();
+        if (result.message !== "") {
+          alert(`Response: ${result.message}`);
+        } else {
+          alert('Book returned successfully.');
+        }
+
+        this.get_book_access(); // Refresh book access data
+      } catch (error) {
+        console.error('Error returning book:', error);
         alert('There was an error processing your request.');
       }
     },

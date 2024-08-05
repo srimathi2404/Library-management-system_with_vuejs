@@ -130,6 +130,7 @@ export default {
       <div class="navbar-links">
         <router-link to="/lib-dashboard/User-Management" class="navbar-link">User Management</router-link>
         <router-link to="/lib-dashboard" class="navbar-link">Lib home</router-link>
+        <router-link to="/lib-dashboard/Chart" class="navbar-link">Stats</router-link>
         <button @click="handleLogout" class="navbar-link">Logout</button>
       </div>
     </nav>

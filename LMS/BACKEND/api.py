@@ -13,7 +13,7 @@ from model_func import all_section,add_section,get_section_by_id,edit_section,de
 from models import db, Books,History
 # from task import send_welcome_msg, generate_csv
 import datetime
-from models import db, Books, Section,  User, BookSection,BookAccess,RolesUsers,Ratings
+from models import db, Books, Section,  User, BookSection,BookAccess,RolesUsers,Ratings,Payment
 from flask_security import SQLAlchemySessionUserDatastore, Security, login_user, logout_user
 from flask_security import current_user, auth_required, login_required, roles_required, roles_accepted,login_user, logout_user,auth_token_required
 from sqlalchemy import and_
@@ -565,4 +565,139 @@ class TriggerExport(Resource):
 
 api.add_resource(TriggerExport, '/trigger_export')
 
+class NoOfBookSec(Resource):
+    def get(self):
+        sections = Section.query.all()
+        data = {
+            section.name: len(section.books)
+            for section in sections if section.name is not None
+        }
+        return jsonify(data)
 
+# API to get the user with the most book activity
+class UserActivity(Resource):
+    def get(self):
+        active_users = db.session.query(
+            BookAccess.user_id, func.count(BookAccess.id).label('active_count')
+        ).filter(BookAccess.is_approved == 1).group_by(BookAccess.user_id).all()
+        
+        history_users = db.session.query(
+            History.user_id, func.count(History.id).label('history_count')
+        ).group_by(History.user_id).all()
+
+        user_activity = {}
+
+        for user_id, count in active_users:
+            if user_id not in user_activity:
+                user_activity[user_id] = 0
+            user_activity[user_id] += count
+
+        for user_id, count in history_users:
+            if user_id not in user_activity:
+                user_activity[user_id] = 0
+            user_activity[user_id] += count
+
+        if not user_activity:
+            return jsonify({"message": "No user activity"})
+
+        return jsonify(user_activity)
+
+# API to get the most popular book based on ratings
+class PopularBooks(Resource):
+    def get(self):
+        popular_books = db.session.query(
+            Ratings.book_id, func.avg(Ratings.rating).label('avg_rating')
+        ).group_by(Ratings.book_id).order_by(func.avg(Ratings.rating).desc()).all()
+
+        if not popular_books:
+            return jsonify({"message": "No popular books"})
+
+        book_data = []
+        for book_id, avg_rating in popular_books:
+            book = Books.query.get(book_id)
+            book_data.append({
+                "book_name": book.name,
+                "avg_rating": avg_rating
+            })
+
+        return jsonify(book_data)
+
+# API to get book issues and returns over time
+class BookIssuesReturns(Resource):
+    def get(self):
+        issues = db.session.query(
+            History.issue_date, func.count(History.id).label('issue_count')
+        ).group_by(History.issue_date).all()
+
+        returns = db.session.query(
+            History.return_date, func.count(History.id).label('return_count')
+        ).group_by(History.return_date).all()
+
+        if not issues and not returns:
+            return jsonify({"message": "No issue or return data"})
+
+        issue_data = {issue_date: count for issue_date, count in issues}
+        return_data = {return_date: count for return_date, count in returns}
+
+        data = {
+            "issues": issue_data,
+            "returns": return_data
+        }
+        return jsonify(data)
+
+api.add_resource(NoOfBookSec, '/no_of_book_sec')
+api.add_resource(UserActivity, '/user_activity')
+api.add_resource(PopularBooks, '/popular_books')
+api.add_resource(BookIssuesReturns, '/book_issues_returns')
+
+
+class PaymentAPI(Resource):
+    def post(self):
+        data = request.get_json()
+        user_id = data.get('user_id')
+        book_id = data.get('book_id')
+        section_id = data.get('section_id')
+        upi_id = data.get('upi_id')
+
+        if not user_id or not book_id or not section_id or not upi_id:
+            return make_response(jsonify({"message": "Missing required fields"}), 400)
+
+        existing_payment = Payment.query.filter_by(user_id=user_id, book_id=book_id).first()
+        if existing_payment:
+            return make_response(jsonify({"message": "You have already paid for this book"}), 400)
+
+        now = datetime.datetime.now()
+        date_of_payment = now.strftime("%B %d, %Y")
+        issue_date = now.strftime("%B %d, %Y")
+        return_date = (now + datetime.timedelta(days=365)).strftime("%B %d, %Y")
+
+        new_payment = Payment(
+            user_id=user_id,
+            book_id=book_id,
+            section_id=section_id,
+            upi_id=upi_id,
+            date_of_payment=date_of_payment
+        )
+        db.session.add(new_payment)
+
+        new_book_access = BookAccess(
+            user_id=user_id,
+            book_id=book_id,
+            issue_date=issue_date,
+            no_of_days=365,
+            return_date=return_date,
+            is_approved=2
+        )
+        db.session.add(new_book_access)
+
+        db.session.commit()
+        return make_response(jsonify({"message": "Payment recorded and access granted successfully"}), 201)
+
+    def get(self, user_id):
+        existing_payments = Payment.query.filter_by(user_id=user_id).all()
+        paid_books = [{"book_id": payment.book_id, "upi_id": payment.upi_id} for payment in existing_payments]
+        upi_id = paid_books[0]["upi_id"] if paid_books else ""
+        return make_response(jsonify({"upi_id": upi_id, "paid_books": paid_books}), 200)
+
+
+api.add_resource(PaymentAPI, '/payment', '/payment/<string:user_id>')

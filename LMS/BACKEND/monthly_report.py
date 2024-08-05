@@ -6,24 +6,61 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import os
-def generate_monthly_report(user_data, file_path):
-    c = canvas.Canvas(file_path, pagesize=letter)
-    width, height = letter
-    
-    c.drawString(100, height - 40, f"Monthly Report for {user_data['username']}")
-    c.drawString(100, height - 60, f"Email: {user_data['email']}")
-    
-    y = height - 100
-    for book in user_data['books']:
-        c.drawString(100, y, f"Book: {book['book_name']} by {book['author']}")
-        c.drawString(100, y - 20, f"Issue Date: {book['issue_date']}")
-        c.drawString(100, y - 40, f"Return Date: {book['return_date']}")
-        y -= 60
-        if y < 40:
-            c.showPage()
-            y = height - 40
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.pdfgen import canvas
+import os
+import time
 
-    c.save()
+def generate_monthly_report(user_data, file_path):
+    doc = SimpleDocTemplate(file_path, pagesize=letter)
+    elements = []
+
+    # Draw a fancy quote at the top
+    quote = "“A room without books is like a body without a soul.” – Cicero"
+    styles = getSampleStyleSheet()
+    quote_paragraph = Paragraph(quote, styles["Normal"])
+    elements.append(quote_paragraph)
+    elements.append(Spacer(1, 12))
+
+    # Draw a heading
+    heading = "MONTHLY REPORT FROM BOOK HIVE"
+    heading_paragraph = Paragraph(heading, styles["Title"])
+    elements.append(heading_paragraph)
+    elements.append(Spacer(1, 24))
+
+    # Draw the user information box
+    user_info = f"Monthly Report for {user_data['username']}<br/>Email: {user_data['email']}"
+    user_info_paragraph = Paragraph(user_info, styles["Normal"])
+    elements.append(user_info_paragraph)
+    elements.append(Spacer(1, 24))
+
+    # Draw the book information in a table
+    data = [['Book', 'Author', 'Issue Date', 'Return Date']]
+    for book in user_data['books']:
+        data.append([book['book_name'], book['author'], book['issue_date'], book['return_date']])
+
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 14),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(table)
+
+    doc.build(elements)
+
+
+
+
+
 
 def send_email(to_address, subject, body, attachment_path):
     from_address = os.getenv('SENDER_ADDRESS')

@@ -113,3 +113,17 @@ class Ratings(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey('Books.id'))
     user_id = db.Column(db.String, db.ForeignKey('user.id'))
     rating = db.Column(db.Integer)
+
+
+class Payment(db.Model):
+    __tablename__ = 'payments'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.String, db.ForeignKey('user.id'), nullable=False)
+    book_id = db.Column(db.Integer, db.ForeignKey('Books.id'), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('Section.id'), nullable=False)
+    upi_id = db.Column(db.String, nullable=False)
+    date_of_payment = db.Column(db.String, nullable=False)
+
+    user = db.relationship('User', backref='payments')
+    book = db.relationship('Books', backref='payments')
+    section = db.relationship('Section', backref='payments')

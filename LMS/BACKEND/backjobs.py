@@ -32,7 +32,7 @@ exp_json=json.dumps(exp_dict)
 app.conf.beat_schedule = {
     'send-monthly-report': {
         'task': 'backjobs.monthly_report_task',
-        'schedule': crontab(hour=19, minute=24, day_of_month=3),
+        'schedule': crontab(hour=20, minute=44, day_of_month=5),
         'args': (monthy_json,)
     },
     'send-daily-reminder': {
@@ -99,13 +99,13 @@ def monthly_report_task(month_json):
         send_email(user_data['email'], subject, body, pdf_path)
         
         # Ensure the file is closed before attempting to delete it
-        try:
-            os.remove(pdf_path)
-        except PermissionError:
-            # If the file is still in use, wait a moment and try again
-            import time
-            time.sleep(1)
-            os.remove(pdf_path)
+#         try:
+#             os.remove(pdf_path)
+#         except PermissionError:
+#             # If the file is still in use, wait a moment and try again
+#             import time
+#             time.sleep(10)
+#             os.remove(pdf_path)
 @app.task
 def engagment1(data):
     print(data)

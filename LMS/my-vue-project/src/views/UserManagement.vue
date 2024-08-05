@@ -26,6 +26,9 @@
                     
                       <button @click="updateApproval(access.book_id, -1, access.user_id)" class="btn btn-outline-light">Revoke</button>
                     </div>
+                    <div v-if="access.is_approved === 2">
+                      Book Bought
+                    </div>
                   </div>
                 </div>
               </div>

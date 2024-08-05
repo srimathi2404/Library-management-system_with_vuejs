@@ -8,6 +8,7 @@
       <div class="navbar-links">
         <router-link to="/user-dashboard/profile" class="navbar-link">User Profile</router-link>
         <router-link to="/user-dashboard/" class="navbar-link">User Home</router-link>
+        <router-link to="/user-dashboard/payment" class="navbar-link">Pay</router-link>
         <button @click="handleLogout" class="navbar-link">Logout</button>
       </div>
     </nav>
