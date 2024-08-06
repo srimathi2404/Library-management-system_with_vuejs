@@ -8,7 +8,7 @@
       </div>
       <div class="form-floating mb-3">
         <label for="bookContent">Content</label>
-        <input v-model="content" id="bookContent" class="form-control" placeholder="Content" required>
+        <textarea v-model="content" id="bookContent" class="form-control content-textarea" placeholder="Content" required></textarea>
       </div>
       <div class="form-floating mb-3">
         <label for="bookAuthor">Author</label>
@@ -141,5 +141,10 @@ label {
 
 .mt-3 {
   margin-top: 20px;
+}
+
+/* Additional CSS to make the content block bigger */
+.content-textarea {
+  height: 200px; /* Adjust this value as needed to make the content block bigger */
 }
 </style>
