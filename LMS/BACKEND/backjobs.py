@@ -32,23 +32,23 @@ exp_json=json.dumps(exp_dict)
 app.conf.beat_schedule = {
     'send-monthly-report': {
         'task': 'backjobs.monthly_report_task',
-        'schedule': crontab(hour=22, minute=32, day_of_month=5),
+        'schedule': crontab(hour=22, minute=32, day_of_month=28),
         'args': (monthy_json,)
     },
     'send-daily-reminder': {
         'task': 'backjobs.engagment1',
-        'schedule': crontab(hour=22, minute=44),
+        'schedule': crontab(hour=21, minute=0),
         'args': (reminders_json,)
     },
     'send-daily1-reminder': {
         'task': 'backjobs.engagment2',
-        'schedule': crontab(hour=22, minute=44),
+        'schedule': crontab(hour=21, minute=0),
         'args': (reminder1_json,)
     },
 
     'remove-expired-book-access': {
             'task': 'backjobs.remove_expired_book_access_task',
-            'schedule': crontab(hour=20, minute=26), 
+            'schedule': crontab(hour=0, minute=1), 
              'args':(exp_json,) # Run daily at midnight
         },
 

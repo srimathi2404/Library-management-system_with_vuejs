@@ -348,7 +348,13 @@ class Book_access(Resource):
 ).count()
         if check>0:
             return jsonify({"message":"book already requested or curretly accessed"})
-        x = db.session.query(BookAccess).filter(and_(BookAccess.user_id == user_id,BookAccess.is_approved != -1)).count()
+        x = db.session.query(BookAccess).filter(
+    and_(
+        BookAccess.user_id == user_id,
+        BookAccess.is_approved != -1,
+        BookAccess.is_approved != 2
+    )
+).count()
         if x>=5:
            print(x)
            return jsonify({"message":"you can't request more than 5 books"})
